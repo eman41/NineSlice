@@ -1,10 +1,5 @@
-﻿// ----------------------------------------------------------------------------
-//  Copyright © 2016 Schell Games, LLC. All Rights Reserved. 
-// 
-//  Author: Eric Policaro
-// 
-//  Date: 03/18/2016
-// ----------------------------------------------------------------------------
+﻿// Mouse.cs - 16/03/2016
+// Eric Policaro
 
 using System;
 using System.Collections.Generic;
