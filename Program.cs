@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Game1
+namespace NineSlice
 {
 #if WINDOWS || LINUX
     /// <summary>

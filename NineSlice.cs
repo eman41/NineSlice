@@ -1,21 +1,31 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace Game1
+namespace NineSlice
 {
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
     public class NineSlice : Game
     {
-        GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
-
         public NineSlice()
         {
-            graphics = new GraphicsDeviceManager(this);
+            var gfx = new GraphicsDeviceManager(this);
+            Screen = new Rectangle
+            {
+                Width = gfx.PreferredBackBufferWidth,
+                Height = gfx.PreferredBackBufferHeight,
+            };
+
             Content.RootDirectory = "Content";
+        }
+
+        public static Rectangle Screen
+        {
+            get;
+            set;
         }
 
         private Mouse Mouse
@@ -23,101 +33,59 @@ namespace Game1
             get; set;
         }
 
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
-        protected override void Initialize()
-        {
-            // TODO: Add your initialization logic here
-
-            base.Initialize();
-        }
-
-        /// <summary>
-        /// LoadContent will be called once per game and is the place to load
-        /// all of your content.
-        /// </summary>
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
-            spriteBatch = new SpriteBatch(GraphicsDevice);
+            _screenBatch = new SpriteBatch(GraphicsDevice);
 
-            // TODO: use this.Content to load your game content here
-
-            _panel = Content.Load<Texture2D>("UI/metalPanel");
-            _sideWidth = _panel.Width / 2;
-            _left = new Rectangle(0, 0, _sideWidth, _panel.Height);
-            _right = new Rectangle(_sideWidth, 0, _sideWidth, _panel.Height);
-
+            _panel = Content.Load<Texture2D>("UI/panel_brown");
             Mouse = new Mouse(Content.Load<Texture2D>("UI/cursor"));
-            _guide1 = new Guide(new Rectangle
+
+            Rectangle r = _panel.Bounds;
+            r.Width = 200;
+            r.Height = 200;
+            r.X = (int)((Screen.Width / 2f) - (r.Width / 2f));
+            r.Y = (int)((Screen.Height / 2f) - (r.Height / 2f));
+
+            var info = new TextureInfo
             {
-                X = 0,
-                Y = 0,
-                Width = graphics.PreferredBackBufferWidth,
-                Height = graphics.PreferredBackBufferHeight,
-            })
+                Source = _panel,
+                Target = r,
+                Buffers = new BufferSet(top: 24, bot: 33, left: 55, right: 45)
+            };
+
+            _sliced = new SlicedTexture(GraphicsDevice, _screenBatch, info)
             {
-                Color = Color.LimeGreen
+                Position = new Vector2(r.X, r.Y)
             };
         }
 
-        Texture2D _panel;
-        private int _sideWidth;
-        private Rectangle _left;
-        private Rectangle _right;
-
-        private Guide _guide1;
-
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// game-specific content.
-        /// </summary>
-        protected override void UnloadContent()
-        {
-            // TODO: Unload any non ContentManager content here
-        }
-
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
             Mouse.Update(gameTime);
-            _guide1.Update(Mouse);
             base.Update(gameTime);
         }
 
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(new Color(37, 38, 38, 255));
 
-            spriteBatch.Begin();
-            spriteBatch.Draw(
-                _panel, null, _left, _left);
-            spriteBatch.Draw(
-                _panel, null, _right, _right);
+            _screenBatch.Begin(SpriteSortMode.Deferred, null, SamplerState.PointClamp, null, null, null, null);
 
-            _guide1.Draw(spriteBatch);
-            Mouse.Draw(spriteBatch);
-            
-            spriteBatch.End();
+            _sliced.Draw(_screenBatch);
+
+            Handles.DrawHandle(_screenBatch, _sliced.Bounds, Color.LimeGreen, _sliced.Buffer);
+            Mouse.Draw(_screenBatch);
+            _screenBatch.End();
 
             
             base.Draw(gameTime);
         }
+
+        private Texture2D _panel;
+        private SlicedTexture _sliced;
+        private SpriteBatch _screenBatch;
     }
 }
